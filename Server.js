@@ -32,7 +32,7 @@ const createToken = (id) => {
     });
 };
 
-mongoose.connect('mongodb+srv://kishok:kishok@cluster0.kdk1x5f.mongodb.net/Zwiggy data?retryWrites=true&w=majority&appName=Cluster0').then(function () {
+mongoose.connect(process.env.Mongo_URI).then(function () {
     console.log("connected");
 });
 
