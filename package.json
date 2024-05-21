@@ -17,7 +17,7 @@
     "validator": "^13.12.0"
   },
   "scripts": {
-    "start":"node src/Server.js",
+    "start":"node src/server.js",
     "nodemon": "nodemon  server.js"
   },
   "name": "backend",
