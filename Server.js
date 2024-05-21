@@ -36,7 +36,7 @@ mongoose.connect(process.env.Mongo_URI).then(function () {
     console.log("connected");
 });
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send('Hello World')
   })
 // Food data
 const storage = multer.diskStorage({
