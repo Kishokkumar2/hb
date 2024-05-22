@@ -24,7 +24,6 @@ const Stripe = new stripe(process.env.StripeSecreatKey);
 app.use("/images", express.static('Uploads'));
 app.use(express.json());
 app.use(cors({
-  
     methods:["POST","GET"],
     credentials: true
 }));
