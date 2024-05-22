@@ -23,7 +23,11 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const Stripe = new stripe(process.env.StripeSecreatKey);
 app.use("/images", express.static('Uploads'));
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  
+    methods:["POST","GET"],
+    credentials: true
+}));
 
 // Function to create JWT token
 const createToken = (id) => {
