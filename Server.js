@@ -31,10 +31,15 @@ const createToken = (id) => {
         expiresIn: '1h'
     });
 };
-
-mongoose.connect(process.env.Mongo_URI).then(function () {
-    console.log("connected");
-});
+const uri = 'mongodb+srv://kishok:kishok@cluster0.kdk1x5f.mongodb.net/datas?retryWrites=true&w=majority&appName=Cluster0';
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }).then(() => {
+    console.log('Connected to MongoDB Atlas');
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB Atlas:', error);
+  });
 app.get('/', (req, res) => {
     res.send('Hello World')
   })
