@@ -23,10 +23,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const Stripe = new stripe(process.env.StripeSecreatKey);
 app.use("/images", express.static('Uploads'));
 app.use(express.json());
-app.use(cors({
-    methods:["POST","GET"],
-    credentials: true
-}));
+app.use(cors());
 
 // Function to create JWT token
 const createToken = (id) => {
@@ -43,7 +40,7 @@ mongoose.connect(uri, {
   }).catch((error) => {
     console.error('Error connecting to MongoDB Atlas:', error);
   });
-app.get('/', (req, res) => {
+app.get('/abc', (req, res) => {
     res.send('Hello World')
   })
 // Food data
