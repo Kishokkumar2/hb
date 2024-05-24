@@ -31,6 +31,8 @@ app.use("/images", express.static('Uploads'));
 app.use(express.json());
 app.use(cors(corsconfig));
 
+app.options("",cors(corsconfig))
+
 // Function to create JWT token
 const createToken = (id) => {
     return jwt.sign({ id }, JWT_SECRET, {
