@@ -9,7 +9,13 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken'); 
 const stripe = require('stripe');
 const  authMiddleware = require('./Middleware/AuthMiddleWare')
+const corsconfig={
+    origin:"*",
+    credential:true,
+    methods:["GET","POST","PUT","DELETE"]
 
+
+}
 require('dotenv').config();
 
 const fooddata = require('./Schemas/Foodschema'); 
@@ -23,7 +29,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const Stripe = new stripe(process.env.StripeSecreatKey);
 app.use("/images", express.static('Uploads'));
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsconfig));
 
 // Function to create JWT token
 const createToken = (id) => {
@@ -31,8 +37,8 @@ const createToken = (id) => {
         expiresIn: '1h'
     });
 };
-const uri = 'mongodb+srv://kishok:kishok@cluster0.kdk1x5f.mongodb.net/datas?retryWrites=true&w=majority&appName=Cluster0';
-mongoose.connect(uri, {
+
+mongoose.connect(process.env.uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   }).then(() => {
