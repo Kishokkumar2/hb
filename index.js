@@ -3,15 +3,15 @@ const mongoose = require('mongoose');
 const app = express();
 const cors = require('cors');
 const multer = require('multer');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // Changed from 'bcrypt' to 'bcryptjs'
 const path = require('path');
 const fs = require('fs');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 const stripe = require('stripe');
 const authMiddleware = require('./Middleware/AuthMiddleWare');
 require('dotenv').config();
 
-const fooddata = require('./Schemas/Foodschema'); 
+const fooddata = require('./Schemas/Foodschema');
 const Registerdata = require("./Schemas/Registerdata");
 const Logindata = require("./Schemas/Login");
 const Order = require("./Schemas/Order");
@@ -40,9 +40,15 @@ const createToken = (id) => {
     });
 };
 
-mongoose.connect(process.env.uri).then(function () {
-    console.log("connected")
-  }).catch(function () { console.log('error') })
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB Atlas');
+}).catch((error) => {
+    console.error('Error connecting to MongoDB Atlas:', error);
+});
+
 app.get('/abc', (req, res) => {
     res.send('Hello World');
 });
