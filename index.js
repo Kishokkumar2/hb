@@ -8,14 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const jwt = require('jsonwebtoken'); 
 const stripe = require('stripe');
-const  authMiddleware = require('./Middleware/AuthMiddleWare')
-const corsconfig={
-    origin:"*",
-    credential:true,
-    methods:["GET","POST","PUT","DELETE"]
-
-
-}
+const authMiddleware = require('./Middleware/AuthMiddleWare');
 require('dotenv').config();
 
 const fooddata = require('./Schemas/Foodschema'); 
@@ -24,14 +17,21 @@ const Logindata = require("./Schemas/Login");
 const Order = require("./Schemas/Order");
 
 const Router = express.Router();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
-const Stripe = new stripe(process.env.StripeSecreatKey);
+const Stripe = stripe(process.env.StripeSecreatKey);
+
+const corsconfig = {
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"]
+};
+
 app.use("/images", express.static('Uploads'));
 app.use(express.json());
 app.use(cors(corsconfig));
 
-app.options("",cors(corsconfig))
+app.options("", cors(corsconfig));
 
 // Function to create JWT token
 const createToken = (id) => {
@@ -40,17 +40,13 @@ const createToken = (id) => {
     });
 };
 
-mongoose.connect(process.env.uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  }).then(() => {
-    console.log('Connected to MongoDB Atlas');
-  }).catch((error) => {
-    console.error('Error connecting to MongoDB Atlas:', error);
-  });
+mongoose.connect(process.env.uri).then(function () {
+    console.log("connected")
+  }).catch(function () { console.log('error') })
 app.get('/abc', (req, res) => {
-    res.send('Hello World')
-  })
+    res.send('Hello World');
+});
+
 // Food data
 const storage = multer.diskStorage({
     destination: "Uploads",
@@ -60,7 +56,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-app.post('/menudata', upload.single("image"), async function (req, res) {
+app.post('/menudata', upload.single("image"), async (req, res) => {
     const image_filename = `${req.file.filename}`;
     const food = new fooddata({
         name: req.body.name,
@@ -78,7 +74,7 @@ app.post('/menudata', upload.single("image"), async function (req, res) {
     }
 });
 
-app.get('/list', async function (req, res) {
+app.get('/list', async (req, res) => {
     try {
         const foods = await fooddata.find({});
         res.json({ success: true, data: foods });
@@ -88,32 +84,33 @@ app.get('/list', async function (req, res) {
     }
 });
 
-// Remove menu data
-app.delete('/delete/:id', function (req, res) {
+app.delete('/delete/:id', async (req, res) => {
     const id = req.params.id;
-    fooddata.findByIdAndDelete({ _id: id })
-        .then(users => res.json(users))
-        .catch(err => res.status(500).json({ success: false, message: "Error deleting food" }));
+    try {
+        const result = await fooddata.findByIdAndDelete(id);
+        res.json({ success: true, result });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error deleting food" });
+    }
 });
 
-// Register page
-app.post("/register", async function (req, res) {
+app.post("/register", async (req, res) => {
     const { name, email, password } = req.body;
     const salt = await bcrypt.genSalt(10);
     const hashedpassword = await bcrypt.hash(password, salt);
-    const data = {
-        name: name,
-        email: email,
+    const data = new Registerdata({
+        name,
+        email,
         password: hashedpassword,
-        cartdata: {} // Initialize cartdata
-    };
+        cartdata: {}
+    });
 
     try {
-        const check = await Registerdata.findOne({ email: email });
+        const check = await Registerdata.findOne({ email });
         if (check) {
             res.json("exist");
         } else {
-            await Registerdata.insertMany([data]);
+            await data.save();
             res.json("not exist");
         }
     } catch (error) {
@@ -121,23 +118,21 @@ app.post("/register", async function (req, res) {
     }
 });
 
-// Login page
-app.post('/Login', async function (req, res) {
+app.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await Registerdata.findOne({ email: email });
-
+        const user = await Registerdata.findOne({ email });
         if (user) {
             const validPassword = await bcrypt.compare(password, user.password);
             if (validPassword) {
                 const token = createToken(user._id);
                 res.json({ success: "exist", token });
-                const loginData = {
-                    email: email,
-                    password: user.password 
-                };
-                await Logindata.insertMany([loginData]);
+                const loginData = new Logindata({
+                    email,
+                    password: user.password
+                });
+                await loginData.save();
             } else {
                 res.json("incorrect password");
             }
@@ -149,12 +144,11 @@ app.post('/Login', async function (req, res) {
     }
 });
 
-// Add to cart
-app.post('/add', authMiddleware, async function(req, res) {
+app.post('/add', authMiddleware, async (req, res) => {
     try {
-        let userData = await Registerdata.findOne({_id: req.body.userId});
+        let userData = await Registerdata.findById(req.body.userId);
         if (!userData.cartdata) {
-            userData.cartdata = {}; // Initialize cartdata if not present
+            userData.cartdata = {};
         }
         let cartdata = userData.cartdata;
         if (!cartdata[req.body.itemId]) {
@@ -170,12 +164,11 @@ app.post('/add', authMiddleware, async function(req, res) {
     }
 });
 
-// Remove from cart
-app.post('/remove', authMiddleware, async function(req, res) {
+app.post('/remove', authMiddleware, async (req, res) => {
     try {
-        let userData = await Registerdata.findOne({_id: req.body.userId});
+        let userData = await Registerdata.findById(req.body.userId);
         if (!userData.cartdata) {
-            userData.cartdata = {}; // Initialize cartdata if not present
+            userData.cartdata = {};
         }
         let cartdata = userData.cartdata;
         if (cartdata[req.body.itemId]) {
@@ -192,11 +185,10 @@ app.post('/remove', authMiddleware, async function(req, res) {
     }
 });
 
-// Get cart data
-app.post('/get', authMiddleware, async function(req, res) {
+app.post('/get', authMiddleware, async (req, res) => {
     try {
-        let userData = await Registerdata.findOne({_id: req.body.userId});
-        let cartdata = userData.cartdata || {}; // Ensure cartdata is an object
+        let userData = await Registerdata.findById(req.body.userId);
+        let cartdata = userData.cartdata || {};
         res.json({ success: true, cartdata });
     } catch (error) {
         console.log(error);
@@ -204,8 +196,7 @@ app.post('/get', authMiddleware, async function(req, res) {
     }
 });
 
-// Place order
-app.post('/place', authMiddleware, async function(req, res) {
+app.post('/place', authMiddleware, async (req, res) => {
     try {
         const newOrder = new Order({
             userId: req.body.userId,
@@ -232,7 +223,7 @@ app.post('/place', authMiddleware, async function(req, res) {
                 product_data: {
                     name: "Delivery Charge"
                 },
-                unit_amount: 200 // Delivery charge in smallest currency unit
+                unit_amount: 200
             },
             quantity: 1
         });
@@ -241,8 +232,8 @@ app.post('/place', authMiddleware, async function(req, res) {
             payment_method_types: ['card'],
             line_items: lineitems,
             mode: 'payment',
-            success_url: `http://${url}/verify?success=true&orderId=${newOrder._id}`,
-            cancel_url: `http://${url}/verify?success=false&orderId=${newOrder._id}`
+            success_url: `http://localhost:${PORT}/verify?success=true&orderId=${newOrder._id}`,
+            cancel_url: `http://localhost:${PORT}/verify?success=false&orderId=${newOrder._id}`
         });
 
         res.json({ success: true, sessionUrl: session.url });
